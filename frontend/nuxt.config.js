@@ -10,8 +10,11 @@ module.exports = {
   },
   modules: ["@nuxtjs/axios"],
   axios: {
-    baseURL: "http://localhost:3000",
+    baseURL: "http://localhost:4000", // Aponta para o backend
   },
   css: [],
   plugins: [],
+  server: {
+    port: 3000,
+  },
 };
