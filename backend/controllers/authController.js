@@ -8,7 +8,7 @@ exports.register = async (req, res) => {
     const hashedPassword = await argon2.hash(senha);
 
     const { rows } = await db.query(
-      "INSERT INTO usuarios (nome, email, senha, data_nascimento) VALUES ($1, $2, $3, $4) RETURNING id, nome, email", // "users" -> "usuarios", colunas ajustadas
+      "INSERT INTO usuarios (nome, email, senha, data_nascimento) VALUES ($1, $2, $3, $4) RETURNING id, nome, email",
       [nome, email, hashedPassword, data_nascimento]
     );
 

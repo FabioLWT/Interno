@@ -1,7 +1,7 @@
 export const state = () => ({
-  user: null, // Dados do usuário logado
-  token: null, // Token JWT
-  veiculos: [], // Lista de veículos
+  user: null,
+  token: null,
+  veiculos: [],
 });
 
 export const mutations = {
@@ -30,8 +30,8 @@ export const actions = {
         email: response.data.email,
       });
       commit("setToken", response.data.token);
-      localStorage.setItem("token", response.data.token); // Persiste o token
-      return response.data; // Retorna para redirecionamento
+      localStorage.setItem("token", response.data.token);
+      return response.data;
     } catch (error) {
       throw new Error("Credenciais inválidas");
     }

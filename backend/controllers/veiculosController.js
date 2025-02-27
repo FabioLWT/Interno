@@ -3,7 +3,7 @@ const db = require("../config/db");
 exports.getAll = async (req, res) => {
   try {
     const { rows } = await db.query(
-      "SELECT v.*, m.nome AS modelo, b.nome AS marca FROM veiculos v JOIN modelos m ON v.modelo_id = m.id JOIN marcas b ON m.marca_id = b.id" // Ajustei tabelas e colunas
+      "SELECT v.*, m.nome AS modelo, b.nome AS marca FROM veiculos v JOIN modelos m ON v.modelo_id = m.id JOIN marcas b ON m.marca_id = b.id"
     );
     res.json(rows);
   } catch (error) {
@@ -16,7 +16,7 @@ exports.create = async (req, res) => {
     req.body;
   try {
     const { rows } = await db.query(
-      "INSERT INTO veiculos (placa, descricao, ano, modelo_id, cor, finalidade, local_descanso) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *", // Ajustei colunas
+      "INSERT INTO veiculos (placa, descricao, ano, modelo_id, cor, finalidade, local_descanso) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
       [placa, descricao, ano, modelo_id, cor, finalidade, local_descanso]
     );
     await db.query(

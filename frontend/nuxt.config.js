@@ -8,9 +8,25 @@ module.exports = {
     ],
     link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
   },
-  modules: ["@nuxtjs/axios"],
+  modules: ["@nuxtjs/axios", "@nuxtjs/vuetify"],
   axios: {
-    baseURL: "http://localhost:4000", // Aponta para o backend
+    baseURL: "http://localhost:4000", // Backend na porta 4000
+  },
+  vuetify: {
+    treeShake: true,
+    icons: {
+      iconfont: "mdi", // Usa Material Design Icons
+    },
+    theme: {
+      dark: false,
+      themes: {
+        light: {
+          primary: "#1976D2",
+          secondary: "#424242",
+          accent: "#FFD700",
+        },
+      },
+    },
   },
   css: [],
   plugins: [],
