@@ -13,6 +13,18 @@ const Historico = {
     `;
     await db.query(query);
     console.log("Tabela 'historico' criada ou já existente.");
+
+    // Busca o id do veículo com placa 'ABC1234' antes de inserir no historico
+    const { rows } = await db.query(
+      "SELECT id FROM veiculos WHERE placa = $1 LIMIT 1",
+      ["ABC1234"]
+    );
+    if (rows.length > 0) {
+      await db.query(
+        "INSERT INTO historico (veiculo_id, acao, descricao) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
+        [rows[0].id, "criado", "Veículo ABC1234 criado"]
+      );
+    }
   },
 };
 

@@ -1,187 +1,354 @@
 <template>
-  <v-container class="veiculos-container" fluid>
-    <v-row align="start" justify="center">
-      <v-col cols="12" md="10">
-        <v-card class="elevation-12 pa-4">
-          <v-toolbar flat color="#FFD700">
-            <v-toolbar-title>Veículos</v-toolbar-title>
-          </v-toolbar>
-          <v-card-text>
-            <v-row class="mb-4">
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="filtro"
-                  label="Buscar veículos"
-                  prepend-icon="mdi-magnify"
-                  outlined
-                  dense
-                  clearable
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12" md="6" class="text-right">
-                <v-btn
-                  color="#1976D2"
-                  dark
-                  @click="abrirModalAdicionar"
-                  class="mt-2 mt-md-0"
-                >
-                  <v-icon left>mdi-plus</v-icon>
-                  Adicionar Veículo
-                </v-btn>
-              </v-col>
-            </v-row>
-            <v-data-table
-              :headers="headers"
-              :items="veiculosFiltrados"
-              :loading="loading"
-              :sort-by="ordenacao.campo"
-              :sort-desc="!ordenacao.asc"
-              class="elevation-1"
-            >
-              <template v-slot:item.actions="{ item }">
-                <v-menu offset-y>
-                  <template v-slot:activator="{ on, attrs }">
-                    <v-btn color="grey" icon v-bind="attrs" v-on="on">
-                      <v-icon>mdi-dots-vertical</v-icon>
-                    </v-btn>
-                  </template>
-                  <v-list>
-                    <v-list-item @click="acaoVeiculo('detalhes', item)">
-                      <v-list-item-title>Detalhes</v-list-item-title>
-                    </v-list-item>
-                    <v-list-item @click="acaoVeiculo('editar', item)">
-                      <v-list-item-title>Editar</v-list-item-title>
-                    </v-list-item>
-                    <v-list-item @click="acaoVeiculo('deletar', item)">
-                      <v-list-item-title>Deletar</v-list-item-title>
-                    </v-list-item>
-                  </v-list>
-                </v-menu>
-              </template>
-            </v-data-table>
-          </v-card-text>
-        </v-card>
+  <v-container fluid>
+    <!-- Filtros -->
+    <v-row class="mb-4">
+      <v-col cols="12" sm="4">
+        <v-select
+          v-model="filters.marca"
+          :items="marcas"
+          label="Marca"
+          placeholder="Selecione a marca do veículo"
+          outlined
+          dense
+          clearable
+        />
+      </v-col>
+      <v-col cols="12" sm="4">
+        <v-select
+          v-model="filters.finalidade"
+          :items="finalidades"
+          label="Propósito de uso"
+          placeholder="Selecione o propósito de uso"
+          outlined
+          dense
+          clearable
+        />
+      </v-col>
+      <v-col cols="12" sm="4">
+        <v-text-field
+          v-model="filters.placa"
+          label="Placa"
+          placeholder="Digite a placa ou cor do veículo"
+          outlined
+          dense
+          clearable
+          append-icon="mdi-magnify"
+        />
       </v-col>
     </v-row>
+
+    <!-- Botão Cadastrar Veículo -->
+    <v-row class="mb-4">
+      <v-col>
+        <v-btn color="primary" @click="openAddModal">
+          <v-icon left>mdi-plus</v-icon>
+          Cadastrar Veículo
+        </v-btn>
+      </v-col>
+    </v-row>
+
+    <!-- Tabela de Veículos -->
+    <v-data-table
+      :headers="headers"
+      :items="filteredVehicles"
+      :items-per-page="10"
+      :page.sync="page"
+      hide-default-footer
+      class="elevation-1"
+    >
+      <!-- Coluna Nível de Conforto com Estrelas -->
+      <template v-slot:item.nivel_conforto="{ item }">
+        <v-rating
+          :value="item.nivel_conforto"
+          color="amber"
+          dense
+          half-increments
+          readonly
+          size="20"
+        />
+      </template>
+
+      <!-- Coluna Ações -->
+      <template v-slot:item.actions="{ item }">
+        <v-menu offset-y>
+          <template v-slot:activator="{ on }">
+            <v-btn icon v-on="on">
+              <v-icon>mdi-dots-vertical</v-icon>
+            </v-btn>
+          </template>
+          <v-list>
+            <v-list-item @click="openDetailsModal(item)">
+              <v-list-item-title>Detalhes</v-list-item-title>
+            </v-list-item>
+            <v-list-item @click="openEditModal(item)">
+              <v-list-item-title>Editar</v-list-item-title>
+            </v-list-item>
+            <v-list-item @click="deleteVehicle(item.id)">
+              <v-list-item-title>Deletar</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+      </template>
+    </v-data-table>
+
+    <!-- Paginação -->
+    <v-row class="mt-4">
+      <v-col>
+        <v-pagination
+          v-model="page"
+          :length="totalPages"
+          :total-visible="7"
+          color="primary"
+        />
+      </v-col>
+    </v-row>
+
+    <!-- Modal Adicionar/Editar -->
+    <v-dialog v-model="dialog" max-width="600px">
+      <v-card>
+        <v-card-title>{{ editMode ? 'Editar Veículo' : 'Adicionar Veículo' }}</v-card-title>
+        <v-card-text>
+          <v-form @submit.prevent="saveVehicle" ref="form" v-model="formValid">
+            <v-text-field v-model="form.placa" label="Placa" outlined dense :rules="[v => !!v || 'Placa é obrigatória']" />
+            <v-text-field v-model="form.marca" label="Marca" outlined dense :rules="[v => !!v || 'Marca é obrigatória']" />
+            <v-text-field v-model="form.modelo" label="Modelo" outlined dense :rules="[v => !!v || 'Modelo é obrigatório']" />
+            <v-text-field v-model="form.ano" label="Ano" type="number" outlined dense :rules="[v => !!v && v >= 1900 && v <= new Date().getFullYear() + 1 || 'Ano inválido']" />
+            <v-text-field v-model="form.cor" label="Cor" outlined dense :rules="[v => !!v || 'Cor é obrigatória']" />
+            <v-select v-model="form.finalidade" :items="finalidades" label="Propósito de uso" outlined dense :rules="[v => !!v || 'Propósito de uso é obrigatório']" />
+            <v-select v-model="form.zero_quilometro" :items="['Sim', 'Não']" label="Zero-quilômetro?" outlined dense :rules="[v => !!v || 'Zero-quilômetro é obrigatório']" />
+            <v-text-field v-model.number="form.nivel_conforto" label="Nível de Conforto (1-5)" type="number" min="1" max="5" outlined dense :rules="[v => !!v && v >= 1 && v <= 5 || 'Nível de conforto deve ser entre 1 e 5']" />
+            <v-text-field v-model.number="form.local_descanso_x" label="Latitude" outlined dense :rules="[v => !!v && !isNaN(v) || 'Latitude inválida']" />
+            <v-text-field v-model.number="form.local_descanso_y" label="Longitude" outlined dense :rules="[v => !!v && !isNaN(v) || 'Longitude inválida']" />
+            <v-btn type="submit" color="primary" class="mr-2" :disabled="!formValid">Salvar</v-btn>
+            <v-btn text @click="dialog = false">Cancelar</v-btn>
+          </v-form>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
+    <!-- Modal Detalhes -->
+    <v-dialog v-model="detailsDialog" max-width="800px">
+      <v-card>
+        <v-card-title>Detalhes do Veículo</v-card-title>
+        <v-card-text>
+          <p>Placa: {{ selectedVehicle?.placa || 'N/A' }}</p>
+          <p>Marca: {{ selectedVehicle?.marca || 'Marca Desconhecida' }}</p>
+          <p>Modelo: {{ selectedVehicle?.modelo || 'Modelo Desconhecido' }}</p>
+          <p>Ano: {{ selectedVehicle?.ano || 'N/A' }}</p>
+          <p>Cor: {{ selectedVehicle?.cor || 'N/A' }}</p>
+          <p>Propósito de uso: {{ selectedVehicle?.finalidade || 'N/A' }}</p>
+          <p>Zero-quilômetro?: {{ selectedVehicle?.zero_quilometro || 'N/A' }}</p>
+          <p>Nível de Conforto: {{ selectedVehicle?.nivel_conforto || 'N/A' }}</p>
+          <l-map :zoom="13" :center="[selectedVehicle?.latitude || 0, selectedVehicle?.longitude || 0]" style="height: 300px;" v-if="selectedVehicle">
+            <l-tile-layer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <l-marker :lat-lng="[selectedVehicle?.latitude || 0, selectedVehicle?.longitude || 0]" />
+          </l-map>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn text @click="detailsDialog = false">Fechar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
 <script>
+import { LMap, LMarker, LTileLayer } from 'vue2-leaflet';
+import { mapState } from 'vuex';
+
 export default {
-  data() {
-    return {
-      filtro: "",
-      ordenacao: { campo: "placa", asc: true },
-      loading: false,
-      headers: [
-        { text: "Placa", value: "placa", sortable: true },
-        { text: "Ano", value: "ano", sortable: true },
-        { text: "Cor", value: "cor", sortable: true },
-        { text: "Ações", value: "actions", sortable: false },
-      ],
-    };
-  },
+  components: { LMap, LTileLayer, LMarker },
+  data: () => ({
+    page: 1,
+    itemsPerPage: 10,
+    filters: {
+      marca: '',
+      finalidade: '',
+      placa: ''
+    },
+    dialog: false,
+    detailsDialog: false,
+    editMode: false,
+    formValid: true,
+    selectedVehicle: null,
+    isFetching: false, // Adicionado para evitar loops infinitos
+    form: {
+      id: null,
+      placa: '',
+      marca: '',
+      modelo: '',
+      ano: '',
+      cor: '',
+      finalidade: '',
+      zero_quilometro: '',
+      nivel_conforto: '',
+      local_descanso_x: '',
+      local_descanso_y: ''
+    },
+    headers: [
+      { text: 'Placa', value: 'placa' },
+      { text: 'Marca/Modelo', value: 'marca_modelo' },
+      { text: 'Ano', value: 'ano' },
+      { text: 'Cor', value: 'cor' },
+      { text: 'Propósito de uso', value: 'finalidade' },
+      { text: 'Zero-quilômetro?', value: 'zero_quilometro' },
+      { text: 'Nível de conforto', value: 'nivel_conforto' },
+      { text: 'Local de repouso (lat, long)', value: 'local_descanso' },
+      { text: '', value: 'actions', sortable: false }
+    ],
+    finalidades: ['Uso pessoal', 'Veículo para locação', 'Uso da empresa'],
+    marcas: ['BMW', 'Chevrolet', 'Peugeot', 'Audi', 'Jeep', 'Ford', 'Fiat', 'Toyota', 'Renault', 'Volkswagen'],
+    vehicles: []
+  }),
   computed: {
-    veiculosFiltrados() {
-      let lista = [...this.$store.state.veiculos];
-      if (this.filtro) {
-        lista = lista.filter((v) =>
-          v.placa.toLowerCase().includes(this.filtro.toLowerCase())
+    ...mapState(['auth']),
+    filteredVehicles() {
+      let filtered = this.vehicles;
+      console.log("Aplicando filtros:", this.filters);
+      if (this.filters.marca) {
+        filtered = filtered.filter(v => v.marca === this.filters.marca);
+      }
+      if (this.filters.finalidade) {
+        filtered = filtered.filter(v => v.finalidade === this.filters.finalidade);
+      }
+      if (this.filters.placa) {
+        filtered = filtered.filter(v => 
+          v.placa.toLowerCase().includes(this.filters.placa.toLowerCase()) ||
+          v.cor.toLowerCase().includes(this.filters.placa.toLowerCase())
         );
       }
-      return lista.sort((a, b) => {
-        const valorA = a[this.ordenacao.campo];
-        const valorB = b[this.ordenacao.campo];
-        return this.ordenacao.asc
-          ? valorA > valorB
-            ? 1
-            : -1
-          : valorA < valorB
-          ? 1
-          : -1;
-      });
+      // Garantir que marca_modelo nunca seja "null null"
+      filtered = filtered.map(v => ({
+        ...v,
+        marca_modelo: `${v.marca || 'Marca Desconhecida'} ${v.modelo || 'Modelo Desconhecido'}`
+      }));
+      console.log("Veículos após filtro:", filtered);
+      return filtered;
     },
+    totalPages() {
+      return Math.ceil(this.filteredVehicles.length / this.itemsPerPage);
+    }
   },
-  async fetch() {
-    if (!this.$store.state.token && localStorage.getItem("token")) {
-      this.$store.commit("setToken", localStorage.getItem("token"));
-    }
-    if (!this.$store.state.user) {
-      if (process.client) {
-        this.$router.push("/login");
-      }
-      return;
-    }
-    this.loading = true;
-    try {
-      await this.$store.dispatch("fetchVeiculos");
-    } catch (error) {
-      this.$vuetify.notify({
-        text: "Erro ao carregar veículos",
-        type: "error",
-        timeout: 3000,
-      });
-    } finally {
-      this.loading = false;
+  async mounted() {
+    if (!this.auth.user) {
+      this.$router.push('/login');
+    } else {
+      await this.fetchVehicles();
+      console.log("Veículos carregados ao montar:", this.vehicles);
     }
   },
   methods: {
-    ordenar(campo) {
-      if (this.ordenacao.campo === campo) {
-        this.ordenacao.asc = !this.ordenacao.asc;
-      } else {
-        this.ordenacao = { campo, asc: true };
+    async fetchVehicles() {
+      if (this.isFetching) return; // Evita chamadas duplicadas
+      this.isFetching = true;
+      try {
+        console.log("Buscando veículos...");
+        const { data } = await this.$axios.get('/veiculos');
+        this.vehicles = data.map(vehicle => ({
+          ...vehicle,
+          marca_modelo: `${vehicle.marca || 'Marca Desconhecida'} ${vehicle.modelo || 'Modelo Desconhecida'}`
+        }));
+        console.log("Veículos carregados:", this.vehicles);
+      } catch (error) {
+        console.error("Erro ao buscar veículos:", error);
+        this.$toast.error("Erro ao carregar veículos: " + (error.response?.data?.error || error.message));
+      } finally {
+        this.isFetching = false;
       }
     },
-    acaoVeiculo(acao, veiculo) {
-      switch (acao) {
-        case "detalhes":
-          this.$vuetify.notify({
-            text: `Detalhes do veículo ${veiculo.placa}`,
-            type: "info",
-            timeout: 3000,
-          });
-          break;
-        case "editar":
-          this.$vuetify.notify({
-            text: `Editar veículo ${veiculo.placa}`,
-            type: "info",
-            timeout: 3000,
-          });
-          break;
-        case "deletar":
-          this.$vuetify.notify({
-            text: `Deletar veículo ${veiculo.placa}`,
-            type: "warning",
-            timeout: 3000,
-          });
-          break;
+    openAddModal() {
+      this.editMode = false;
+      this.form = {
+        id: null,
+        placa: '',
+        marca: '',
+        modelo: '',
+        ano: '',
+        cor: '',
+        finalidade: '',
+        zero_quilometro: '',
+        nivel_conforto: '',
+        local_descanso_x: '',
+        local_descanso_y: ''
+      };
+      this.dialog = true;
+    },
+    openEditModal(item) {
+      console.log("Abrindo modal de edição para:", item);
+      this.editMode = true;
+      this.form = {
+        id: item.id,
+        placa: item.placa || '',
+        marca: item.marca || '',
+        modelo: item.modelo || '',
+        ano: item.ano || '',
+        cor: item.cor || '',
+        finalidade: item.finalidade || '',
+        zero_quilometro: item.zero_quilometro || '',
+        nivel_conforto: item.nivel_conforto || '',
+        local_descanso_x: item.latitude || '',
+        local_descanso_y: item.longitude || ''
+      };
+      this.dialog = true;
+    },
+    openDetailsModal(item) {
+      this.selectedVehicle = item;
+      this.detailsDialog = true;
+    },
+    async saveVehicle() {
+      if (!this.formValid) {
+        this.$toast.error('Por favor, corrija os campos inválidos.');
+        return;
+      }
+
+      const payload = {
+        ...this.form,
+        local_descanso: {
+          x: parseFloat(this.form.local_descanso_x),
+          y: parseFloat(this.form.local_descanso_y)
+        }
+      };
+      delete payload.local_descanso_x;
+      delete payload.local_descanso_y;
+
+      try {
+        if (this.editMode) {
+          console.log("Atualizando veículo - Payload:", payload);
+          const { data } = await this.$axios.put(`/veiculos/${this.form.id}`, payload);
+          console.log("Resposta do PUT:", data);
+          this.$toast.success('Veículo atualizado com sucesso!');
+        } else {
+          console.log("Cadastrando veículo - Payload:", payload);
+          const { data } = await this.$axios.post('/veiculos', payload);
+          console.log("Resposta do POST:", data);
+          this.$toast.success('Veículo cadastrado com sucesso!');
+        }
+        this.dialog = false;
+        await this.fetchVehicles();
+        console.log("Lista de veículos atualizada:", this.vehicles);
+      } catch (error) {
+        console.error("Erro na requisição:", error.response || error);
+        this.$toast.error(`Erro ao ${this.editMode ? 'atualizar' : 'cadastrar'} veículo: ${error.response?.data?.error || error.message}`);
       }
     },
-    abrirModalAdicionar() {
-      this.$vuetify.notify({
-        text: "Modal de adicionar veículo ainda não implementado",
-        type: "info",
-        timeout: 3000,
-      });
-    },
-  },
+    async deleteVehicle(id) {
+      if (confirm('Tem certeza que deseja deletar este veículo?')) {
+        try {
+          console.log("Deletando veículo com id:", id);
+          await this.$axios.delete(`/veiculos/${id}`);
+          this.$toast.success('Veículo deletado com sucesso!');
+          await this.fetchVehicles();
+          console.log("Lista de veículos após exclusão:", this.vehicles);
+        } catch (error) {
+          this.$toast.error(`Erro ao deletar veículo: ${error.response?.data?.error || error.message}`);
+          console.error("Erro na exclusão:", error);
+        }
+      }
+    }
+  }
 };
 </script>
 
 <style scoped>
-.veiculos-container {
-  padding: 20px;
-}
-.v-card {
-  border-radius: 8px;
-}
-.v-data-table {
-  background: white;
-}
-.v-toolbar-title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #1976D2;
-}
+/* Estilos existentes */
 </style>

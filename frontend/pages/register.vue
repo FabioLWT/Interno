@@ -7,8 +7,25 @@
             <div class="text-center mb-4">
               <v-icon x-large color="primary">mdi-garage</v-icon>
             </div>
-            <h2 class="text-center mb-6">Login</h2>
-            <v-form @submit.prevent="login">
+            <h2 class="text-center mb-6">Novo Cadastro</h2>
+            <v-form @submit.prevent="register">
+              <v-text-field
+                v-model="form.nome"
+                label="Nome de usuário"
+                placeholder="Digite o nome de usuário"
+                outlined
+                dense
+                class="mb-4"
+              />
+              <v-text-field
+                v-model="form.data_nascimento"
+                label="Data de aniversário"
+                placeholder="Selecione a data de aniversário"
+                type="date"
+                outlined
+                dense
+                class="mb-4"
+              />
               <v-text-field
                 v-model="form.email"
                 label="E-mail"
@@ -29,12 +46,24 @@
                 :type="showPassword ? 'text' : 'password'"
                 class="mb-4"
               />
+              <v-text-field
+                v-model="form.confirmarSenha"
+                label="Confirmar Senha"
+                placeholder="Confirme a senha"
+                type="password"
+                outlined
+                dense
+                append-icon="mdi-eye-off"
+                @click:append="showConfirmPassword = !showConfirmPassword"
+                :type="showConfirmPassword ? 'text' : 'password'"
+                class="mb-4"
+              />
               <v-btn type="submit" color="primary" block large class="mb-4">
-                Entrar
+                Cadastrar
               </v-btn>
               <div class="text-center">
-                <nuxt-link to="/register" class="text-decoration-none">
-                  Criar conta
+                <nuxt-link to="/login" class="text-decoration-none">
+                  Fazer login
                 </nuxt-link>
               </div>
             </v-form>
@@ -56,8 +85,15 @@
 export default {
   layout: 'guest', // Define o layout como 'guest'
   data: () => ({
-    form: { email: '', senha: '' },
+    form: {
+      nome: '',
+      email: '',
+      senha: '',
+      confirmarSenha: '',
+      data_nascimento: ''
+    },
     showPassword: false,
+    showConfirmPassword: false,
     snackbar: {
       show: false,
       message: '',
@@ -65,21 +101,29 @@ export default {
     }
   }),
   methods: {
-    async login() {
-      try {
-        await this.$store.dispatch('auth/login', this.form);
+    async register() {
+      if (this.form.senha !== this.form.confirmarSenha) {
         this.snackbar = {
           show: true,
-          message: 'Login Realizado',
+          message: 'As senhas não coincidem',
+          color: 'error'
+        };
+        return;
+      }
+      try {
+        await this.$axios.post('/auth/register', this.form);
+        this.snackbar = {
+          show: true,
+          message: 'Usuário Cadastrado com Sucesso',
           color: 'success'
         };
         setTimeout(() => {
-          this.$router.push('/');
+          this.$router.push('/login');
         }, 2000);
       } catch (error) {
         this.snackbar = {
           show: true,
-          message: 'Erro ao Realizar Login',
+          message: 'Falha ao Cadastrar Usuário',
           color: 'error'
         };
       }
