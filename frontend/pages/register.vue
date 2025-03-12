@@ -1,9 +1,9 @@
 <template>
-  <div>
+  <div class="register-container">
     <v-container fluid class="fill-height">
       <v-row align="center" justify="center">
         <v-col cols="12" sm="8" md="4">
-          <div class="form-container">
+          <v-card class="mx-auto pa-6" elevation="8" max-width="400" style="min-height: 400px; margin-top: 50px;">
             <div class="text-center mb-4">
               <v-icon x-large color="primary">mdi-garage</v-icon>
             </div>
@@ -67,7 +67,7 @@
                 </nuxt-link>
               </div>
             </v-form>
-          </div>
+          </v-card>
         </v-col>
       </v-row>
     </v-container>
@@ -83,7 +83,7 @@
 
 <script>
 export default {
-  layout: 'guest', // Define o layout como 'guest'
+  layout: 'guest',
   data: () => ({
     form: {
       nome: '',
@@ -131,3 +131,30 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+/* Estilo para o container raiz com a imagem de fundo */
+.register-container {
+  height: 100vh; /* Ocupa toda a altura da tela */
+  background-image: url('~/assets/images/background.jpg'); /* Caminho da imagem */
+  background-size: cover; /* Cobre toda a tela */
+  background-position: center; /* Centraliza a imagem */
+  background-repeat: no-repeat; /* Não repete a imagem */
+}
+
+/* Garante que o container ocupe toda a altura da tela e centralize o conteúdo */
+.v-container.fill-height {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Adiciona um estilo ao card para garantir que ele ocupe um espaço mínimo */
+.v-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.95); /* Fundo branco com leve transparência para legibilidade */
+}
+</style>

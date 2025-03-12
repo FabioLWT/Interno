@@ -19,26 +19,6 @@ const Veiculos = {
     `;
     await db.query(query);
     console.log("Tabela 'veiculos' criada ou já existente.");
-
-    // Inserções de dados de teste
-    await db.query(
-      `INSERT INTO veiculos (placa, descricao, ano, modelo_id, cor, finalidade, zero_quilometro, nivel_conforto, local_descanso) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, ST_GeomFromText('POINT(-23.5 -46.6)', 4326)) 
-       ON CONFLICT DO NOTHING`,
-      ["ABC1234", "Veículo de teste", 2023, 1, "Branco", "Pessoal", "Não", 4]
-    );
-    await db.query(
-      `INSERT INTO veiculos (placa, descricao, ano, modelo_id, cor, finalidade, zero_quilometro, nivel_conforto, local_descanso) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, ST_GeomFromText('POINT(-23.6 -46.7)', 4326)) 
-       ON CONFLICT DO NOTHING`,
-      ["DEF5678", "Outro veículo", 2024, 1, "Preto", "Comercial", "Sim", 5]
-    );
-    await db.query(
-      `INSERT INTO veiculos (placa, descricao, ano, modelo_id, cor, finalidade, zero_quilometro, nivel_conforto, local_descanso) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, ST_GeomFromText('POINT(-23.7 -46.8)', 4326)) 
-       ON CONFLICT DO NOTHING`,
-      ["PAM-3434", "Veículo novo", 2025, 1, "Azul", "Pessoal", "Não", 3]
-    );
   },
 };
 
