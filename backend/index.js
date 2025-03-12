@@ -7,13 +7,13 @@ const historicoRoutes = require("./routes/historico");
 
 const app = express();
 
-// Configuração do CORS para permitir o frontend na porta 3000
+
 app.use(
   cors({
     origin: "http://localhost:3000",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Adicionar OPTIONS para pré-voo
-    allowedHeaders: ["Content-Type", "Authorization", "Cache-Control"], // Adicionar Cache-Control
-    optionsSuccessStatus: 200, // Resposta 200 para requisições OPTIONS
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
+    allowedHeaders: ["Content-Type", "Authorization", "Cache-Control"], 
+    optionsSuccessStatus: 200, 
   })
 );
 
