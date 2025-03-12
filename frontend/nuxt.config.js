@@ -1,10 +1,10 @@
 import colors from "vuetify/es5/util/colors";
 
 export default {
-  // Disable server-side rendering (SPA mode)
+  plugins: ["~/plugins/leaflet.js", "~/plugins/toast.js"],
+  css: ["leaflet/dist/leaflet.css", "~/assets/css/main.css"],
   ssr: false,
 
-  // Global page headers
   head: {
     titleTemplate: "%s - RotaLocadora",
     title: "Sistema",
@@ -30,28 +30,17 @@ export default {
     ],
   },
 
-  // Global CSS
-  css: ["~/assets/css/main.css"],
-
-  // Plugins to run before rendering page
-  plugins: ["~/plugins/toast.js"],
-
-  // Auto import components
   components: true,
 
-  // Modules for dev and build
   buildModules: ["@nuxtjs/vuetify"],
 
-  // Modules
   modules: ["@nuxtjs/axios"],
 
-  // Configuração do Axios
   axios: {
     baseURL: "http://localhost:4000",
     credentials: false,
   },
 
-  // Vuetify module configuration
   vuetify: {
     customVariables: ["~/assets/variables.scss"],
     theme: {
@@ -79,6 +68,5 @@ export default {
     },
   },
 
-  // Build Configuration
   build: {},
 };

@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <!-- Tabela de Histórico -->
+    
     <v-data-table
       :headers="headers"
       :items="history"
@@ -9,7 +9,7 @@
       hide-default-footer
       class="elevation-1"
     >
-      <!-- Coluna Ação com Ícone -->
+      
       <template v-slot:item.acao="{ item }">
         <v-icon :color="getActionColor(item.acao)" small class="mr-2">
           {{ getActionIcon(item.acao) }}
@@ -17,13 +17,13 @@
         {{ item.acao }}
       </template>
 
-      <!-- Coluna Data -->
+      
       <template v-slot:item.data="{ item }">
         {{ formatDate(item.data) }}
       </template>
     </v-data-table>
 
-    <!-- Paginação -->
+    
     <v-row class="mt-4">
       <v-col>
         <v-pagination
@@ -38,6 +38,9 @@
 </template>
 
 <script>
+import moment from 'moment';
+import 'moment/locale/pt-br';
+
 export default {
   data: () => ({
     page: 1,
@@ -64,8 +67,14 @@ export default {
   },
   methods: {
     async fetchHistory() {
-      const { data } = await this.$axios.get('/historico');
-      this.history = data;
+      try {
+        const { data } = await this.$axios.get('/historico');
+        this.history = data;
+        console.log("Histórico carregado:", this.history); 
+      } catch (error) {
+        console.error("Erro ao buscar histórico:", error);
+        this.$toast.error("Erro ao carregar histórico: " + (error.response?.data?.error || error.message));
+      }
     },
     getActionIcon(acao) {
       if (acao.includes('CADASTRADO')) return 'mdi-plus-circle';
@@ -80,14 +89,10 @@ export default {
       return 'grey';
     },
     formatDate(date) {
-      return new Date(date).toLocaleString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
+      if (!date) return 'N/A'; 
+      moment.locale('pt-br');
+      const formattedDate = moment(date).format('DD/MM/YYYY [às] HH:mm');
+      return formattedDate === 'Invalid date' ? 'Data Inválida' : formattedDate;
     }
   }
 };
