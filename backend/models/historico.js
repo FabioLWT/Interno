@@ -14,7 +14,7 @@ const Historico = {
     await db.query(query);
     console.log("Tabela 'historico' criada ou já existente.");
 
-    // Busca o id do veículo com placa 'ABC1234' antes de inserir no historico
+    
     const { rows } = await db.query(
       "SELECT id FROM veiculos WHERE placa = $1 LIMIT 1",
       ["ABC1234"]
