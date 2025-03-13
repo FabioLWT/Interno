@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <!-- Filtros -->
+    
     <v-row class="mb-4">
       <v-col cols="12" sm="4">
         <v-select
@@ -39,7 +39,7 @@
       </v-col>
     </v-row>
 
-    <!-- Botão Cadastrar Veículo -->
+    
     <v-row class="mb-4">
       <v-col>
         <v-btn color="primary" @click="openAddModal">
@@ -49,7 +49,7 @@
       </v-col>
     </v-row>
 
-    <!-- Tabela de Veículos -->
+    
     <v-data-table
       :headers="headers"
       :items="filteredVehicles"
@@ -58,7 +58,7 @@
       hide-default-footer
       class="elevation-1"
     >
-      <!-- Coluna Nível de Conforto com Estrelas -->
+      
       <template v-slot:item.nivel_conforto="{ item }">
         <v-rating
           :value="item.nivel_conforto"
@@ -70,12 +70,12 @@
         />
       </template>
 
-      <!-- Coluna Local de Repouso (lat, long) -->
+      
       <template v-slot:item.local_descanso="{ item }">
         {{ formatCoordinates(item.latitude, item.longitude) }}
       </template>
 
-      <!-- Coluna Ações -->
+      
       <template v-slot:item.actions="{ item }">
         <v-menu offset-y>
           <template v-slot:activator="{ on }">
@@ -98,7 +98,7 @@
       </template>
     </v-data-table>
 
-    <!-- Paginação -->
+    
     <v-row class="mt-4">
       <v-col>
         <v-pagination
@@ -110,7 +110,7 @@
       </v-col>
     </v-row>
 
-    <!-- Modal Adicionar/Editar -->
+    
     <v-dialog v-model="dialog" max-width="600px">
       <v-card>
         <v-card-title>{{
@@ -219,7 +219,7 @@
       </v-card>
     </v-dialog>
 
-    <!-- Modal Detalhes -->
+    
     <v-dialog v-model="detailsDialog" max-width="800px" @after-enter="initMap">
       <v-card>
         <v-card-title>Detalhes do Veículo</v-card-title>
@@ -444,11 +444,11 @@ export default {
     },
     openDetailsModal(item) {
       console.log("Dados do veículo selecionado:", item);
-      // Corrigir a inversão de latitude e longitude
+      
       this.selectedVehicle = {
         ...item,
-        latitude: item.longitude, // Corrige latitude para o valor que está em longitude
-        longitude: item.latitude, // Corrige longitude para o valor que está em latitude
+        latitude: item.longitude, 
+        longitude: item.latitude, 
       };
       this.detailsDialog = true;
     },
@@ -482,8 +482,8 @@ export default {
       const payload = {
         ...this.form,
         local_descanso: {
-          x: lat, // Latitude
-          y: lng, // Longitude
+          x: lat, 
+          y: lng, 
         },
       };
       delete payload.local_descanso_x;
@@ -543,7 +543,7 @@ export default {
 </script>
 
 <style scoped>
-/* Estilizar o contêiner do mapa */
+
 .leaflet-container {
   height: 300px;
   width: 100%;

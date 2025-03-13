@@ -9,6 +9,14 @@ const pool = new Pool({
   port: process.env.DB_PORT,
 });
 
+pool.connect((err) => {
+  if (err) {
+    console.error("Erro ao conectar ao banco de dados:", err.stack);
+  } else {
+    console.log("Conectado ao banco de dados PostgreSQL com sucesso!");
+  }
+});
+
 module.exports = {
   query: (text, params) => pool.query(text, params),
 };

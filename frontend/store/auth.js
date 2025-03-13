@@ -25,7 +25,7 @@ export const actions = {
     if (token) {
       this.$axios.setToken(token, "Bearer");
       try {
-        const { data } = await this.$axios.get("/auth/me"); // Adicione este endpoint no backend
+        const { data } = await this.$axios.get("/auth/me");
         commit("setUser", data);
       } catch (e) {
         commit("setUser", null);

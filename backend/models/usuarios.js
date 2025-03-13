@@ -1,5 +1,5 @@
 const db = require("../config/db");
-const argon2 = require("argon2"); // Importe argon2
+const argon2 = require("argon2");
 
 const Usuarios = {
   createTable: async () => {
@@ -16,7 +16,6 @@ const Usuarios = {
     await db.query(query);
     console.log("Tabela 'usuarios' criada ou já existente.");
 
-    // Inserção de usuário de teste com senha hash usando argon2
     const hashedPassword = await argon2.hash("senha123");
     await db.query(
       "INSERT INTO usuarios (nome, email, senha, data_nascimento) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
