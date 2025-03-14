@@ -56,16 +56,32 @@ exports.create = async (req, res) => {
   });
 
   try {
-    if (marca_id) {
-      const marcaCheck = await db.query("SELECT 1 FROM marcas WHERE id = $1", [
-        marca_id,
-      ]);
-      if (marcaCheck.rows.length === 0) {
-        return res.status(400).json({ error: "Marca inválida" });
-      }
-    } else {
+    if (!marca_id) {
       return res.status(400).json({ error: "Marca é obrigatória" });
     }
+    const marcaCheck = await db.query("SELECT 1 FROM marcas WHERE id = $1", [
+      marca_id,
+    ]);
+    if (marcaCheck.rows.length === 0) {
+      return res.status(400).json({ error: "Marca inválida" });
+    }
+
+    if (!local_descanso || !local_descanso.x || !local_descanso.y) {
+      return res
+        .status(400)
+        .json({ error: "Coordenadas de local_descanso inválidas" });
+    }
+
+    let zeroQuilometroBoolean;
+    if (typeof zero_quilometro === "string") {
+      zeroQuilometroBoolean = zero_quilometro.toLowerCase() === "sim";
+    } else {
+      zeroQuilometroBoolean = !!zero_quilometro;
+    }
+
+    const nivelConfortoString = nivel_conforto
+      ? nivel_conforto.toString()
+      : null;
 
     let finalModeloId;
     if (!modelo_id || isNaN(modelo_id) || modelo_id === null) {
@@ -105,12 +121,11 @@ exports.create = async (req, res) => {
       finalModeloId = modelo_id;
     }
 
-    if (!local_descanso || !local_descanso.x || !local_descanso.y) {
-      throw new Error("Coordenadas de local_descanso inválidas");
-    }
     const localDescansoValue = `ST_GeomFromText('POINT(${local_descanso.x} ${local_descanso.y})', 4326)`;
     const { rows } = await db.query(
-      `INSERT INTO veiculos (placa, descricao, ano, modelo_id, cor, finalidade, zero_quilometro, nivel_conforto, local_descanso) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, ${localDescansoValue}) RETURNING *`,
+      `INSERT INTO veiculos (placa, descricao, ano, modelo_id, cor, finalidade, zero_quilometro, nivel_conforto, local_descanso) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, ${localDescansoValue}) 
+       RETURNING *`,
       [
         placa,
         descricao,
@@ -118,14 +133,16 @@ exports.create = async (req, res) => {
         finalModeloId,
         cor,
         finalidade,
-        zero_quilometro,
-        nivel_conforto,
+        zeroQuilometroBoolean,
+        nivelConfortoString,
       ]
     );
+
     await db.query(
       "INSERT INTO historico (veiculo_id, acao, descricao) VALUES ($1, $2, $3)",
       [rows[0].id, "criado", `Veículo ${placa} criado`]
     );
+
     res.status(201).json(rows[0]);
   } catch (error) {
     console.error("Erro ao criar veículo:", error.stack);
@@ -255,6 +272,17 @@ exports.update = async (req, res) => {
       finalModeloId = modelo_id;
     }
 
+    let zeroQuilometroBoolean;
+    if (typeof zero_quilometro === "string") {
+      zeroQuilometroBoolean = zero_quilometro.toLowerCase() === "sim";
+    } else {
+      zeroQuilometroBoolean = !!zero_quilometro;
+    }
+
+    const nivelConfortoString = nivel_conforto
+      ? nivel_conforto.toString()
+      : null;
+
     const localDescansoValue = `ST_GeomFromText('POINT(${x} ${y})', 4326)`;
     const { rows } = await db.query(
       `UPDATE veiculos SET placa = $1, descricao = $2, ano = $3, modelo_id = $4, cor = $5, finalidade = $6, zero_quilometro = $7, nivel_conforto = $8, local_descanso = ${localDescansoValue} WHERE id = $9 RETURNING *`,
@@ -265,8 +293,8 @@ exports.update = async (req, res) => {
         finalModeloId,
         cor,
         finalidade,
-        zero_quilometro,
-        nivel_conforto,
+        zeroQuilometroBoolean,
+        nivelConfortoString,
         id,
       ]
     );
@@ -309,17 +337,22 @@ exports.update = async (req, res) => {
 
 exports.deleteVehicle = async (req, res) => {
   const { id } = req.params;
+  console.log(`Tentando deletar veículo com ID: ${id}`);
   try {
-    const { rows: vehicleRows } = await db.query(
+    const { rows: vehicle } = await db.query(
       "SELECT placa FROM veiculos WHERE id = $1",
       [id]
     );
-    if (vehicleRows.length === 0) {
+    if (vehicle.length === 0) {
       return res.status(404).json({ error: "Veículo não encontrado" });
     }
-    const placa = vehicleRows[0].placa;
+    const placa = vehicle[0].placa;
 
-    await db.query("DELETE FROM historico WHERE veiculo_id = $1", [id]);
+    await db.query(
+      "INSERT INTO historico (veiculo_id, acao, descricao) VALUES ($1, $2, $3)",
+      [id, "deletado", `Veículo ${placa} deletado`]
+    );
+
     await db.query("DELETE FROM veiculos WHERE id = $1", [id]);
 
     res.status(204).send();

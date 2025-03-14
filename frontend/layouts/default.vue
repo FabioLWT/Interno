@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <!-- Barra de navegação superior -->
+    
     <v-app-bar app color="primary" dark>
       <v-toolbar-title>Rota Locadora</v-toolbar-title>
       <v-btn v-if="isAuthenticated && isMainRoute" text to="/" class="ml-4">
@@ -40,10 +40,10 @@ export default {
       return this.$store.state.auth.user;
     },
     isAuthenticated() {
-      return !!this.$store.state.auth.user; // Verifica se o usuário está logado
+      return !!this.$store.state.auth.user; 
     },
     isMainRoute() {
-      // Mostra os botões apenas nas rotas principais (index e historico)
+      
       const currentRoute = this.$route.path;
       return currentRoute === '/' || currentRoute === '/historico';
     }
@@ -55,7 +55,7 @@ export default {
     }
   },
   mounted() {
-    this.$store.dispatch('auth/fetchUser'); // Carrega o usuário ao montar o layout
+    this.$store.dispatch('auth/fetchUser'); 
   }
 };
 </script>

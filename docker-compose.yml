@@ -22,7 +22,7 @@ services:
     command: ["npm", "start"]
 
   db:
-    image: postgres:17
+    image: postgis/postgis:17-3.4
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=123

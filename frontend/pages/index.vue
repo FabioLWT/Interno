@@ -1,6 +1,5 @@
 <template>
   <v-container fluid>
-    
     <v-row class="mb-4">
       <v-col cols="12" sm="4">
         <v-select
@@ -39,7 +38,6 @@
       </v-col>
     </v-row>
 
-    
     <v-row class="mb-4">
       <v-col>
         <v-btn color="primary" @click="openAddModal">
@@ -49,7 +47,6 @@
       </v-col>
     </v-row>
 
-    
     <v-data-table
       :headers="headers"
       :items="filteredVehicles"
@@ -58,7 +55,6 @@
       hide-default-footer
       class="elevation-1"
     >
-      
       <template v-slot:item.nivel_conforto="{ item }">
         <v-rating
           :value="item.nivel_conforto"
@@ -70,12 +66,14 @@
         />
       </template>
 
-      
       <template v-slot:item.local_descanso="{ item }">
         {{ formatCoordinates(item.latitude, item.longitude) }}
       </template>
 
-      
+      <template v-slot:item.zero_quilometro="{ item }">
+        {{ formatZeroQuilometro(item.zero_quilometro) }}
+      </template>
+
       <template v-slot:item.actions="{ item }">
         <v-menu offset-y>
           <template v-slot:activator="{ on }">
@@ -90,7 +88,7 @@
             <v-list-item @click="openEditModal(item)">
               <v-list-item-title>Editar</v-list-item-title>
             </v-list-item>
-            <v-list-item @click="deleteVehicle(item.id)">
+            <v-list-item @click="openDeleteModal(item)">
               <v-list-item-title>Deletar</v-list-item-title>
             </v-list-item>
           </v-list>
@@ -98,7 +96,6 @@
       </template>
     </v-data-table>
 
-    
     <v-row class="mt-4">
       <v-col>
         <v-pagination
@@ -110,7 +107,6 @@
       </v-col>
     </v-row>
 
-    
     <v-dialog v-model="dialog" max-width="600px">
       <v-card>
         <v-card-title>{{
@@ -219,7 +215,6 @@
       </v-card>
     </v-dialog>
 
-    
     <v-dialog v-model="detailsDialog" max-width="800px" @after-enter="initMap">
       <v-card>
         <v-card-title>Detalhes do Veículo</v-card-title>
@@ -231,7 +226,10 @@
           <p>Cor: {{ selectedVehicle?.cor || "N/A" }}</p>
           <p>Propósito de uso: {{ selectedVehicle?.finalidade || "N/A" }}</p>
           <p>
-            Zero-quilômetro?: {{ selectedVehicle?.zero_quilometro || "N/A" }}
+            Zero-quilômetro?:
+            {{
+              formatZeroQuilometro(selectedVehicle?.zero_quilometro) || "N/A"
+            }}
           </p>
           <p>
             Nível de Conforto: {{ selectedVehicle?.nivel_conforto || "N/A" }}
@@ -272,6 +270,19 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="deleteDialog" max-width="400px">
+      <v-card>
+        <v-card-title>Deseja Excluir Esse Carro?</v-card-title>
+        <v-card-text>
+          <p>Essa ação não pode ser desfeita.</p>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn color="error" @click="confirmDelete">Sim</v-btn>
+          <v-btn text @click="deleteDialog = false">Não</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -295,6 +306,8 @@ export default {
     formValid: true,
     selectedVehicle: null,
     isFetching: false,
+    deleteDialog: false, // Novo estado para controlar a modal de exclusão
+    vehicleToDelete: null, // Armazena o ID do veículo a ser deletado
     form: {
       id: null,
       placa: "",
@@ -435,7 +448,7 @@ export default {
         ano: item.ano || "",
         cor: item.cor || "",
         finalidade: item.finalidade || "",
-        zero_quilometro: item.zero_quilometro || "",
+        zero_quilometro: item.zero_quilometro ? "Sim" : "Não", // Converte para o formato do formulário
         nivel_conforto: item.nivel_conforto || "",
         local_descanso_x: item.latitude || "",
         local_descanso_y: item.longitude || "",
@@ -444,11 +457,10 @@ export default {
     },
     openDetailsModal(item) {
       console.log("Dados do veículo selecionado:", item);
-      
       this.selectedVehicle = {
         ...item,
-        latitude: item.longitude, 
-        longitude: item.latitude, 
+        latitude: item.longitude,
+        longitude: item.latitude,
       };
       this.detailsDialog = true;
     },
@@ -481,9 +493,10 @@ export default {
 
       const payload = {
         ...this.form,
+        zero_quilometro: this.form.zero_quilometro === "Sim" ? true : false, // Converte para booleano
         local_descanso: {
-          x: lat, 
-          y: lng, 
+          x: lat,
+          y: lng,
         },
       };
       delete payload.local_descanso_x;
@@ -516,11 +529,15 @@ export default {
         );
       }
     },
-    async deleteVehicle(id) {
-      if (confirm("Tem certeza que deseja deletar este veículo?")) {
+    openDeleteModal(item) {
+      this.vehicleToDelete = item.id; // Armazena o ID do veículo a ser deletado
+      this.deleteDialog = true; // Abre a modal de confirmação
+    },
+    async confirmDelete() {
+      if (this.vehicleToDelete) {
         try {
-          console.log("Deletando veículo com id:", id);
-          await this.$axios.delete(`/veiculos/${id}`);
+          console.log("Deletando veículo com id:", this.vehicleToDelete);
+          await this.$axios.delete(`/veiculos/${this.vehicleToDelete}`);
           this.$toast.success("Veículo deletado com sucesso!");
           await this.fetchVehicles();
           console.log("Lista de veículos após exclusão:", this.vehicles);
@@ -533,17 +550,21 @@ export default {
           console.error("Erro na exclusão:", error);
         }
       }
+      this.deleteDialog = false; // Fecha a modal após a ação
+      this.vehicleToDelete = null; // Limpa o ID armazenado
     },
     formatCoordinates(lat, lng) {
       if (lat == null || lng == null) return "N/A";
       return `${lng.toFixed(4)}, ${lat.toFixed(4)}`;
+    },
+    formatZeroQuilometro(value) {
+      return value === true ? "Sim" : "Não";
     },
   },
 };
 </script>
 
 <style scoped>
-
 .leaflet-container {
   height: 300px;
   width: 100%;
